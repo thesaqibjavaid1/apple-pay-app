@@ -8,97 +8,136 @@ import {
   StatusBar,
   Button,
   Alert,
+  Platform,
 } from 'react-native';
 import {Header, Colors} from 'react-native/Libraries/NewAppScreen';
 
-const PaymentRequest = require('react-native-payments').PaymentRequest;
-
-const METHOD_DATA = [
-  {
-    supportedMethods: ['apple-pay'],
-    data: {
-      merchantIdentifier: 'merchant.apple.test',
-      supportedNetworks: ['visa', 'mastercard', 'amex'],
-      countryCode: 'US',
-      currencyCode: 'USD',
-    },
-  },
-];
-
-const DETAILS = {
-  id: 'basic-example',
-  displayItems: [
-    {
-      label: 'Movie Ticket',
-      amount: {currency: 'USD', value: '15.00'},
-    },
-    {
-      label: 'Grocery',
-      amount: {currency: 'USD', value: '5.00'},
-    },
-  ],
-  shippingOptions: [
-    {
-      id: 'economy',
-      label: 'Economy Shipping',
-      amount: {currency: 'USD', value: '0.00'},
-      detail: 'Arrives in 3-5 days', // `detail` is specific to React Native Payments
-    },
-  ],
-  total: {
-    label: 'Enappd Store',
-    amount: {currency: 'USD', value: '20.00'},
-  },
-};
-const OPTIONS = {
-  requestPayerName: true,
-  requestPayerPhone: true,
-  requestPayerEmail: true,
-  requestShipping: true,
-};
-const paymentRequest = new PaymentRequest(METHOD_DATA, DETAILS, OPTIONS);
-
-paymentRequest.addEventListener('shippingaddresschange', (e) => {
-  const updatedDetails = getUpdatedDetailsForShippingAddress(
-    paymentRequest.shippingAddress,
-  );
-
-  e.updateWith(updatedDetails);
-});
-
-paymentRequest.addEventListener('shippingoptionchange', (e) => {
-  const updatedDetails = getUpdatedDetailsForShippingOption(
-    paymentRequest.shippingOption,
-  );
-
-  e.updateWith(updatedDetails);
-});
-
-check = () => {
-  paymentRequest.canMakePayments().then((canMakePayment) => {
-    if (canMakePayment) {
-      Alert.alert('Apple Pay', 'Apple Pay is available in this device');
-    }
-  });
-};
-
-pay = () => {
-  paymentRequest.canMakePayments().then((canMakePayment) => {
-    if (canMakePayment) {
-      console.log('Can Make Payment');
-      paymentRequest.show().then((paymentResponse) => {
-        // Your payment processing code goes here
-        console.log('Payment Response: ', paymentResponse);
-
-        paymentResponse.complete('success');
-      });
-    } else {
-      console.log('Cant Make Payment');
-    }
-  });
-};
-
 const App = () => {
+  const PaymentRequest = require('react-native-payments').PaymentRequest;
+
+  const METHOD_DATA = [
+    {
+      supportedMethods: ['apple-pay'],
+      data: {
+        merchantIdentifier: 'merchant.com.octek.applepaytest',
+        supportedNetworks: ['visa', 'mastercard', 'amex'],
+        countryCode: 'US',
+        currencyCode: 'USD',
+      },
+    },
+  ];
+  const Android_METHOD_DATA = [
+    {
+      supportedMethods: ['apple-pay'],
+      data: {
+        merchantIdentifier: 'merchant.com.octek.applepaytest',
+        supportedNetworks: ['visa', 'mastercard', 'amex'],
+        countryCode: 'US',
+        currencyCode: 'USD',
+      },
+    },
+  ];
+
+  const DETAILS = {
+    id: 'basic-example',
+    displayItems: [
+      {
+        label: 'Movie Ticket',
+        amount: {currency: 'USD', value: '15.00'},
+      },
+      {
+        label: 'Grocery',
+        amount: {currency: 'USD', value: '5.00'},
+      },
+    ],
+    shippingOptions: [
+      {
+        id: 'economy',
+        label: 'Economy Shipping',
+        amount: {currency: 'USD', value: '0.00'},
+        detail: 'Arrives in 3-5 days', // `detail` is specific to React Native Payments
+      },
+    ],
+    total: {
+      label: 'Enappd Store',
+      amount: {currency: 'USD', value: '20.00'},
+    },
+  };
+  const OPTIONS = {
+    requestPayerName: true,
+    requestPayerPhone: true,
+    requestPayerEmail: true,
+    requestShipping: true,
+  };
+  const paymentRequest = new PaymentRequest(
+    Platform.OS === 'ios' ? METHOD_DATA : Android_METHOD_DATA,
+    DETAILS,
+    OPTIONS,
+  );
+
+  paymentRequest.addEventListener('shippingaddresschange', (e) => {
+    const updatedDetails = getUpdatedDetailsForShippingAddress(
+      paymentRequest.shippingAddress,
+    );
+
+    console.log('update 1', updatedDetails);
+
+    e.updateWith(updatedDetails);
+  });
+
+  paymentRequest.addEventListener('shippingoptionchange', (e) => {
+    const updatedDetails = getUpdatedDetailsForShippingOption(
+      paymentRequest.shippingOption,
+    );
+    console.log('update 2', updatedDetails);
+    console.log('update 3', e);
+    e.updateWith(updatedDetails);
+  });
+
+  check = () => {
+    paymentRequest.canMakePayments().then((canMakePayment) => {
+      if (canMakePayment) {
+        Alert.alert('Apple Pay', 'Apple Pay is available in this device');
+      }
+    });
+  };
+
+  const pay = () => {
+    paymentRequest
+      .canMakePayments()
+      .then((canMakePayment) => {
+        if (canMakePayment) {
+          console.log('1');
+          setUpdate(!update);
+          console.log('Can Make Payment');
+          paymentRequest
+            .show()
+            .then((paymentResponse) => {
+              // Your payment processing code goes here
+              paymentResponse.complete('success');
+              setUpdate(!update);
+              console.log('2');
+            })
+            .catch((error) => {
+              console.log('3');
+              setUpdate(!update);
+              console.log('Show Error', error);
+              //paymentRequest.abort();
+            });
+        } else {
+          setUpdate(!update);
+          console.log('4');
+          console.log('Cant Make Payment');
+        }
+      })
+      .catch((error) => {
+        setUpdate(!update);
+        console.log('5');
+        console.log('Can Make Payments Error', error);
+      });
+  };
+  const [update, setUpdate] = React.useState(true);
+  React.useEffect(() => {}, [update]);
   return (
     <Fragment>
       <StatusBar barStyle="dark-content" />
@@ -161,7 +200,11 @@ const App = () => {
             <Button
               style={styles.payButton}
               title="Pay with Apple Pay"
-              onPress={() => this.pay()}
+              onPress={() => {
+                console.log('start');
+                setUpdate(!update);
+                pay();
+              }}
             />
             {/* <ApplePayButton /> */}
           </View>
